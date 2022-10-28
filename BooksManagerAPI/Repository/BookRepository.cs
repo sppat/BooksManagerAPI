@@ -5,6 +5,7 @@ using BooksManagerAPI.RepositoryContracts;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Npgsql;
 using System.Data;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace BooksManagerAPI.Repository
@@ -25,26 +26,7 @@ namespace BooksManagerAPI.Repository
                 values (@Title, @PublicationDate, @Pages, @CategoryId, @AuthorId)
             ";
 
-            DataTable table = new DataTable();
-            NpgsqlDataReader reader;
-
-            using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
-            {
-                connection.Open();
-
-                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@Title", postBookDto.Title);
-                    command.Parameters.AddWithValue("@PublicationDate", Convert.ToDateTime(postBookDto.PublicationDate));
-                    command.Parameters.AddWithValue("@Pages", postBookDto.Pages);
-                    command.Parameters.AddWithValue("@CategoryId", postBookDto.CategoryId);
-                    command.Parameters.AddWithValue("@AuthorId", postBookDto.AuthorId);
-                    reader = command.ExecuteReader();
-
-                    reader.Close();
-                    connection.Close();
-                }
-            }
+            DataManipulate(query, postBookDto);
         }
 
         public void Delete(int id)
@@ -54,21 +36,7 @@ namespace BooksManagerAPI.Repository
                 where ""Books"".""Id"" = @id
             ";
 
-            NpgsqlDataReader reader;
-
-            using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
-            {
-                connection.Open();
-
-                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@id", id);
-                    reader = command.ExecuteReader();
-
-                    reader.Close();
-                    connection.Close();
-                }
-            }
+            DataManipulate(query, id: id);
         }
 
         public DataTable GetAllBooks()
@@ -91,24 +59,7 @@ namespace BooksManagerAPI.Repository
                 on ""Authors"".""Id"" = ""Books"".""AuthorId""
             ";
 
-            DataTable table = new DataTable();
-            NpgsqlDataReader reader;
-
-            using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
-            {
-                connection.Open();
-
-                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                {
-                    reader = command.ExecuteReader();
-                    table.Load(reader);
-
-                    reader.Close();
-                    connection.Close();
-                }
-            }
-
-            return table;
+            return DataQuery(query);
         }
 
         public DataTable GetById(int id)
@@ -132,30 +83,13 @@ namespace BooksManagerAPI.Repository
                 where ""Books"".""Id"" = @id
             ";
 
-            DataTable table = new DataTable();
-            NpgsqlDataReader reader;
-
-            using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
-            {
-                connection.Open();
-
-                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@id", id);
-                    reader = command.ExecuteReader();
-                    table.Load(reader);
-
-                    reader.Close();
-                    connection.Close();
-                }
-            }
-
-            return table;
+            return DataQuery(query, id);
         }
 
         public void Update(PutBookDto putBookDto)
         {
             string buildSet = "set ";
+
             foreach (var property in putBookDto.GetType().GetProperties())
             {
                 var value = property.GetValue(putBookDto);
@@ -169,6 +103,11 @@ namespace BooksManagerAPI.Repository
                 buildSet.TrimEnd().TrimEnd(',') +
                 @" where ""Books"".""Id"" = @Id";
 
+            DataManipulate(query, dataObject: putBookDto);
+        }
+
+        private DataTable DataQuery(string query, int? id = null)
+        {
             DataTable table = new DataTable();
             NpgsqlDataReader reader;
 
@@ -178,13 +117,46 @@ namespace BooksManagerAPI.Repository
 
                 using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                 {
-                    foreach (var property in putBookDto.GetType().GetProperties())
+                    if (id is not null)
                     {
-                        var value = property.GetValue(putBookDto);
-                        if (value is not null)
+                        command.Parameters.AddWithValue("@id", id);
+                    }
+                    reader = command.ExecuteReader();
+                    table.Load(reader);
+
+                    reader.Close();
+                    connection.Close();
+                }
+            }
+
+            return table;
+        }
+
+        private void DataManipulate(string query, object? dataObject = null, int? id = null)
+        {
+            NpgsqlDataReader reader;
+
+            using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
+            {
+                connection.Open();
+
+                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                {
+                    if (dataObject is not null)
+                    {
+                        foreach (var property in dataObject.GetType().GetProperties())
                         {
-                            command.Parameters.AddWithValue($"@{property.Name}", value);
+                            var value = property.GetValue(dataObject);
+                            if (value is not null)
+                            {
+                                command.Parameters.AddWithValue($"@{property.Name}", value);
+                            }
                         }
+                    }
+                    
+                    if (id is not null)
+                    {
+                        command.Parameters.AddWithValue("@id", id);
                     }
 
                     reader = command.ExecuteReader();
