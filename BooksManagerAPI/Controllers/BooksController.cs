@@ -19,11 +19,14 @@ namespace BooksManagerAPI.Controllers
 
         [HttpGet]
         [Cache(300)]
+        [ProducesResponseType(200)]
         public async Task<ActionResult<ICollection<GetBookDto>>> GetAll()
             => Ok(await _bookManager.GetAllBooksAsync());
 
         [HttpGet("{id}")]
         [Cache(300)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(200)]
         public async Task<ActionResult<GetBookDto>> GetById(int id)
         {
             if (!await _bookManager.BookExistsAsync(id))
@@ -35,7 +38,8 @@ namespace BooksManagerAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add(PostBookDto postBookDto)
+        [ProducesResponseType(200)]
+        public async Task<ActionResult<string>> Add(PostBookDto postBookDto)
         {
             await _bookManager.AddAsync(postBookDto);
 
@@ -43,7 +47,9 @@ namespace BooksManagerAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [ProducesResponseType(404)]
+        [ProducesResponseType(200)]
+        public async Task<ActionResult<string>> Delete(int id)
         {
             if (!await _bookManager.BookExistsAsync(id))
             {
@@ -56,7 +62,10 @@ namespace BooksManagerAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, PutBookDto putBookDto)
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(200)]
+        public async Task<ActionResult<string>> Update(int id, PutBookDto putBookDto)
         {
             if (id != putBookDto.Id)
             {
@@ -75,6 +84,7 @@ namespace BooksManagerAPI.Controllers
 
         [HttpGet("search/{searchString}")]
         [Cache(300)]
+        [ProducesResponseType(200)]
         public async Task<ActionResult<ICollection<GetBookDto>>> SearchByTitle(string searchString)
             => Ok(await _bookManager.GetBooksByTitleSearchAsync(searchString));
     }
