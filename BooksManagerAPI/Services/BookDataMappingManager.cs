@@ -1,8 +1,6 @@
 ﻿using BooksManagerAPI.Models.Dtos.AuthorDtos;
 using BooksManagerAPI.Models.Dtos.BookDtos;
 using BooksManagerAPI.Models.Dtos.CategoryDtos;
-using BooksManagerAPI.RepositoryContracts;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Data;
 
 namespace BooksManagerAPI.Services

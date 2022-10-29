@@ -1,5 +1,5 @@
-﻿using BooksManagerAPI.Models.Dtos.BookDtos;
-using BooksManagerAPI.RepositoryContracts;
+﻿using BooksManagerAPI.Interfaces.RepositoryInterfaces;
+using BooksManagerAPI.Models.Dtos.BookDtos;
 
 namespace BooksManagerAPI.Services
 {
@@ -14,10 +14,19 @@ namespace BooksManagerAPI.Services
             _bookMapper = bookMapper;
         }
 
-        public ICollection<GetBookDto> GetAllBooks() => _bookMapper.MapBooksToGetDto(_bookRepository.GetAllBooks());
-        public ICollection<GetBookDto> GetBookById(int id) => _bookMapper.MapBooksToGetDto(_bookRepository.GetById(id));
-        public void Add(PostBookDto postBookDto) => _bookRepository.Add(postBookDto);
-        public void Delete(int id) => _bookRepository.Delete(id);
-        public void Update(PutBookDto putBookDto) => _bookRepository.Update(putBookDto);
+        public async Task<ICollection<GetBookDto>> GetAllBooksAsync() => _bookMapper.MapBooksToGetDto(await _bookRepository.GetAllBooksAsync());
+
+        public async Task<GetBookDto> GetBookByIdAsync(int id) => _bookMapper.MapBookToGetDto(await _bookRepository.GetByIdAsync(id));
+
+        public async Task<ICollection<GetBookDto>> GetBooksByTitleSearchAsync(string searchString) 
+            => _bookMapper.MapBooksToGetDto(await _bookRepository.SearchByTitleAsync(searchString));
+
+        public async Task AddAsync(PostBookDto postBookDto) => await _bookRepository.AddAsync(postBookDto);
+        
+        public async Task DeleteAsync(int id) => await _bookRepository.DeleteAsync(id);
+        
+        public async Task UpdateAsync(PutBookDto putBookDto) => await _bookRepository.UpdateAsync(putBookDto);
+        
+        public async Task<bool> BookExistsAsync(int id) => await _bookRepository.ExistsAsync(id);
     }
 }

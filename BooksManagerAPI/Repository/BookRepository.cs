@@ -1,7 +1,7 @@
-﻿using BooksManagerAPI.Models.Dtos.AuthorDtos;
+﻿using BooksManagerAPI.Interfaces.RepositoryInterfaces;
+using BooksManagerAPI.Models.Dtos.AuthorDtos;
 using BooksManagerAPI.Models.Dtos.BookDtos;
 using BooksManagerAPI.Models.Dtos.CategoryDtos;
-using BooksManagerAPI.RepositoryContracts;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Npgsql;
 using System.Data;
@@ -19,27 +19,40 @@ namespace BooksManagerAPI.Repository
             _config = config;
         }
 
-        public void Add(PostBookDto postBookDto)
+        public async Task AddAsync(PostBookDto postBookDto)
         {
             string query = @"
                 insert into ""Books"" (""Title"", ""PublicationDate"", ""Pages"", ""CategoryId"", ""AuthorId"") 
                 values (@Title, @PublicationDate, @Pages, @CategoryId, @AuthorId)
             ";
 
-            DataManipulate(query, postBookDto);
+            await DataManipulateAsync(query, postBookDto);
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
             string query = @"
                 delete from ""Books""
+                where ""Books"".""Id"" = @Id
+            ";
+
+            await DataManipulateAsync(query, id: id);
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            string query = @"
+                select *
+                from ""Books""
                 where ""Books"".""Id"" = @id
             ";
 
-            DataManipulate(query, id: id);
+            var result = await DataQueryAsync(query, id: id);
+
+            return result.Rows.Count != 0;
         }
 
-        public DataTable GetAllBooks()
+        public async Task<DataTable> GetAllBooksAsync()
         {
             string query = @"
                 select 
@@ -59,10 +72,10 @@ namespace BooksManagerAPI.Repository
                 on ""Authors"".""Id"" = ""Books"".""AuthorId""
             ";
 
-            return DataQuery(query);
+            return await DataQueryAsync(query);
         }
 
-        public DataTable GetById(int id)
+        public async Task<DataTable> GetByIdAsync(int id)
         {
             string query = @"
                 select 
@@ -83,10 +96,34 @@ namespace BooksManagerAPI.Repository
                 where ""Books"".""Id"" = @id
             ";
 
-            return DataQuery(query, id);
+            return await DataQueryAsync(query, id: id);
         }
 
-        public void Update(PutBookDto putBookDto)
+        public async Task<DataTable> SearchByTitleAsync(string searchString)
+        {
+            string query = @"
+                select 
+                    ""Books"".""Id"",
+                    ""Books"".""Title"",
+                    ""Books"".""PublicationDate"",
+                    ""Books"".""Pages"",
+                    ""Books"".""CategoryId"",
+                    ""Books"".""AuthorId"",
+                    ""Categories"".""Name"" as ""CategoryName"",
+                    ""Authors"".""Name"" as ""AuthorName"",
+                    ""Authors"".""LastName"" as ""AuthorLastName""
+                from ""Books""
+                inner join ""Categories""
+                on ""Categories"".""Id"" = ""Books"".""CategoryId""
+                inner join ""Authors""
+                on ""Authors"".""Id"" = ""Books"".""AuthorId""
+                where ""Books"".""Title"" like '%@Title%'
+            ";
+            
+            return await DataQueryAsync(query, title: searchString);
+        }
+
+        public async Task UpdateAsync(PutBookDto putBookDto)
         {
             string buildSet = "set ";
 
@@ -103,28 +140,33 @@ namespace BooksManagerAPI.Repository
                 buildSet.TrimEnd().TrimEnd(',') +
                 @" where ""Books"".""Id"" = @Id";
 
-            DataManipulate(query, dataObject: putBookDto);
+            await DataManipulateAsync(query, dataObject: putBookDto);
         }
 
-        private DataTable DataQuery(string query, int? id = null)
+        private async Task<DataTable> DataQueryAsync(string query, int? id = null, string? title = null)
         {
             DataTable table = new DataTable();
             NpgsqlDataReader reader;
 
-            using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
+            await using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
             {
-                connection.Open();
+                await connection.OpenAsync();
 
-                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                await using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                 {
                     if (id is not null)
                     {
                         command.Parameters.AddWithValue("@id", id);
                     }
-                    reader = command.ExecuteReader();
+                    
+                    if (title is not null)
+                    {
+                        command.Parameters.AddWithValue("@Title", title);
+                    }
+
+                    reader = await command.ExecuteReaderAsync();
                     table.Load(reader);
 
-                    reader.Close();
                     connection.Close();
                 }
             }
@@ -132,15 +174,13 @@ namespace BooksManagerAPI.Repository
             return table;
         }
 
-        private void DataManipulate(string query, object? dataObject = null, int? id = null)
+        private async Task DataManipulateAsync(string query, object? dataObject = null, int? id = null)
         {
-            NpgsqlDataReader reader;
-
-            using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
+            await using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
             {
-                connection.Open();
+                await connection.OpenAsync();
 
-                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                await using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                 {
                     if (dataObject is not null)
                     {
@@ -156,12 +196,11 @@ namespace BooksManagerAPI.Repository
                     
                     if (id is not null)
                     {
-                        command.Parameters.AddWithValue("@id", id);
+                        command.Parameters.AddWithValue("@Id", id);
                     }
 
-                    reader = command.ExecuteReader();
+                    await command.ExecuteReaderAsync();
 
-                    reader.Close();
                     connection.Close();
                 }
             }

@@ -1,6 +1,8 @@
 using BooksManagerAPI.Data;
+using BooksManagerAPI.Interfaces.CacheInterfaces;
+using BooksManagerAPI.Interfaces.RepositoryInterfaces;
+using BooksManagerAPI.Middleware;
 using BooksManagerAPI.Repository;
-using BooksManagerAPI.RepositoryContracts;
 using BooksManagerAPI.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +22,14 @@ builder.Services.AddScoped(typeof(BookDataMappingManager));
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped(typeof(BookDataManager));
 
+builder.Services.AddStackExchangeRedisCache(options =>
+    options.Configuration = builder.Configuration["ConnectionStrings:Redis"]);
+
+builder.Services.AddSingleton<ICacheService, CacheService>();
+
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

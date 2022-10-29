@@ -1,11 +1,9 @@
-﻿using BooksManagerAPI.Models.Dtos.AuthorDtos;
+﻿using BooksManagerAPI.Attributes;
+using BooksManagerAPI.Interfaces.RepositoryInterfaces;
 using BooksManagerAPI.Models.Dtos.BookDtos;
-using BooksManagerAPI.Models.Dtos.CategoryDtos;
 using BooksManagerAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using Npgsql;
-using System.Data;
 
 namespace BooksManagerAPI.Controllers
 {
@@ -14,38 +12,73 @@ namespace BooksManagerAPI.Controllers
     [ApiController]
     public class BooksController : ControllerBase
     {
+        private readonly IBookRepository _bookRepository;
         private readonly BookDataManager _bookManager;
 
-        public BooksController(BookDataManager bookManager)
+        public BooksController(IBookRepository bookRepository, BookDataManager bookManager)
         {
+            _bookRepository = bookRepository;
             _bookManager = bookManager;
         }
 
         [HttpGet]
-        public IActionResult GetAll() => Ok(JsonConvert.SerializeObject(_bookManager.GetAllBooks(), Formatting.Indented));
+        [Cache(300)]
+        public async Task<IActionResult> GetAll() 
+            => Ok(JsonConvert.SerializeObject(await _bookManager.GetAllBooksAsync(), Formatting.Indented));
 
         [HttpGet("{id}")]
-        public IActionResult GetById(int id) => Ok(JsonConvert.SerializeObject(_bookManager.GetBookById(id), Formatting.Indented));
+        [Cache(300)]
+        public async Task<IActionResult> GetById(int id)
+        {
+            if (! await _bookManager.BookExistsAsync(id))
+            {
+                return NotFound("The book you are looking for, does not exist.");
+            }
+
+            return Ok(JsonConvert.SerializeObject(await _bookManager.GetBookByIdAsync(id), Formatting.Indented));
+        } 
 
         [HttpPost]
-        public IActionResult Add(PostBookDto postBookDto)
+        public async Task<IActionResult> Add(PostBookDto postBookDto)
         {
-            _bookManager.Add(postBookDto);
+            await _bookManager.AddAsync(postBookDto);
+
             return Ok("Book added successfully");
         }
         
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            _bookManager.Delete(id);
+            if (! await _bookManager.BookExistsAsync(id))
+            {
+                return NotFound("The book you are trying to delete, does not exist.");
+            }
+
+            await _bookManager.DeleteAsync(id);
+
             return Ok("Book deleted successfully");
         }
         
-        [HttpPut]
-        public IActionResult Update(PutBookDto putBookDto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, PutBookDto putBookDto)
         {
-            _bookManager.Update(putBookDto);
+            if (id != putBookDto.Id)
+            {
+                return BadRequest("Url Id does not match with book Id");
+            }
+
+            if (! await _bookManager.BookExistsAsync(id))
+            {
+                return NotFound("The book you are trying to update, does not exist.");
+            }
+
+            await _bookManager.UpdateAsync(putBookDto);
+
             return Ok("Book updated successfully");
         }
+
+        [HttpGet("search/{searchString}")]
+        public async Task<IActionResult> SearchByTitle(string searchString) 
+            => Ok(JsonConvert.SerializeObject(await _bookManager.GetBooksByTitleSearchAsync(searchString), Formatting.Indented));
     }
 }
