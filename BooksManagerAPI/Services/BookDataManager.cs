@@ -18,15 +18,15 @@ namespace BooksManagerAPI.Services
 
         public async Task<GetBookDto> GetBookByIdAsync(int id) => _bookMapper.MapBookToGetDto(await _bookRepository.GetByIdAsync(id));
 
-        public async Task<ICollection<GetBookDto>> GetBooksByTitleSearchAsync(string searchString) 
+        public async Task<ICollection<GetBookDto>> GetBooksByTitleSearchAsync(string searchString)
             => _bookMapper.MapBooksToGetDto(await _bookRepository.SearchByTitleAsync(searchString));
 
         public async Task AddAsync(PostBookDto postBookDto) => await _bookRepository.AddAsync(postBookDto);
-        
+
         public async Task DeleteAsync(int id) => await _bookRepository.DeleteAsync(id);
-        
+
         public async Task UpdateAsync(PutBookDto putBookDto) => await _bookRepository.UpdateAsync(putBookDto);
-        
+
         public async Task<bool> BookExistsAsync(int id) => await _bookRepository.ExistsAsync(id);
     }
 }

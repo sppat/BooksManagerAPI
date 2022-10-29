@@ -1,12 +1,7 @@
 ﻿using BooksManagerAPI.Interfaces.RepositoryInterfaces;
-using BooksManagerAPI.Models.Dtos.AuthorDtos;
 using BooksManagerAPI.Models.Dtos.BookDtos;
-using BooksManagerAPI.Models.Dtos.CategoryDtos;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Npgsql;
 using System.Data;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace BooksManagerAPI.Repository
 {
@@ -119,7 +114,7 @@ namespace BooksManagerAPI.Repository
                 on ""Authors"".""Id"" = ""Books"".""AuthorId""
                 where ""Books"".""Title"" like '%' || @title || '%'
             ";
-            
+
             return await DataQueryAsync(query, title: searchString);
         }
 
@@ -158,7 +153,7 @@ namespace BooksManagerAPI.Repository
                     {
                         command.Parameters.AddWithValue("@id", id);
                     }
-                    
+
                     if (title is not null)
                     {
                         command.Parameters.AddWithValue("@title", title);
@@ -193,7 +188,7 @@ namespace BooksManagerAPI.Repository
                             }
                         }
                     }
-                    
+
                     if (id is not null)
                     {
                         command.Parameters.AddWithValue("@Id", id);

@@ -1,7 +1,5 @@
 ﻿using BooksManagerAPI.Models;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.CompilerServices;
 
 namespace BooksManagerAPI.Data
 {
@@ -10,7 +8,7 @@ namespace BooksManagerAPI.Data
         public static void Seed(this ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Author>().HasData(
-                new Author 
+                new Author
                 {
                     Id = 1,
                     Name = "John",
@@ -39,7 +37,7 @@ namespace BooksManagerAPI.Data
 
             modelBuilder.Entity<Book>().HasData(
                 new Book
-                { 
+                {
                     Id = 1,
                     Title = "Book 1",
                     Pages = 100,
@@ -47,7 +45,7 @@ namespace BooksManagerAPI.Data
                     AuthorId = 1
                 },
                 new Book
-                { 
+                {
                     Id = 2,
                     Title = "Book 2",
                     Pages = 200,

@@ -1,7 +1,6 @@
 ﻿using BooksManagerAPI.Interfaces.CacheInterfaces;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
-using StackExchange.Redis;
 
 namespace BooksManagerAPI.Services
 {

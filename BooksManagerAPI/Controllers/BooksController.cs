@@ -23,20 +23,20 @@ namespace BooksManagerAPI.Controllers
 
         [HttpGet]
         [Cache(300)]
-        public async Task<IActionResult> GetAll() 
+        public async Task<IActionResult> GetAll()
             => Ok(await _bookManager.GetAllBooksAsync());
 
         [HttpGet("{id}")]
         [Cache(300)]
         public async Task<IActionResult> GetById(int id)
         {
-            if (! await _bookManager.BookExistsAsync(id))
+            if (!await _bookManager.BookExistsAsync(id))
             {
                 return NotFound("The book you are looking for, does not exist.");
             }
 
             return Ok(await _bookManager.GetBookByIdAsync(id));
-        } 
+        }
 
         [HttpPost]
         public async Task<IActionResult> Add(PostBookDto postBookDto)
@@ -45,11 +45,11 @@ namespace BooksManagerAPI.Controllers
 
             return Ok("Book added successfully");
         }
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            if (! await _bookManager.BookExistsAsync(id))
+            if (!await _bookManager.BookExistsAsync(id))
             {
                 return NotFound("The book you are trying to delete, does not exist.");
             }
@@ -58,7 +58,7 @@ namespace BooksManagerAPI.Controllers
 
             return Ok("Book deleted successfully");
         }
-        
+
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, PutBookDto putBookDto)
         {
@@ -67,7 +67,7 @@ namespace BooksManagerAPI.Controllers
                 return BadRequest("Url Id does not match with book Id");
             }
 
-            if (! await _bookManager.BookExistsAsync(id))
+            if (!await _bookManager.BookExistsAsync(id))
             {
                 return NotFound("The book you are trying to update, does not exist.");
             }
@@ -79,7 +79,7 @@ namespace BooksManagerAPI.Controllers
 
         [HttpGet("search/{searchString}")]
         [Cache(300)]
-        public async Task<IActionResult> SearchByTitle(string searchString) 
+        public async Task<IActionResult> SearchByTitle(string searchString)
             => Ok(JsonConvert.SerializeObject(await _bookManager.GetBooksByTitleSearchAsync(searchString), Formatting.Indented));
     }
 }

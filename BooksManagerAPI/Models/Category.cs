@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace BooksManagerAPI.Models
+﻿namespace BooksManagerAPI.Models
 {
     public class Category
     {

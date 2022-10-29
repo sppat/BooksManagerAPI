@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace BooksManagerAPI.Models.Dtos.BookDtos
+﻿namespace BooksManagerAPI.Models.Dtos.BookDtos
 {
     public class PutBookDto
     {
