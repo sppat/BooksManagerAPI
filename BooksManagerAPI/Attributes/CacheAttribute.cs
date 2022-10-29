@@ -1,6 +1,7 @@
 ﻿using BooksManagerAPI.Interfaces.CacheInterfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Newtonsoft.Json;
 using System.Text;
 
 namespace BooksManagerAPI.Attributes
@@ -18,7 +19,7 @@ namespace BooksManagerAPI.Attributes
         {
             var cacheService = context.HttpContext.RequestServices.GetRequiredService<ICacheService>();
 
-            var key = GenerateCacheKeyFromRequest(context.HttpContext.Request);
+            var key = context.HttpContext.Request.Path;
 
             var cachedResponse = await cacheService.GetCachedResponseAsync(key);
 
@@ -41,20 +42,6 @@ namespace BooksManagerAPI.Attributes
             {
                 await cacheService.CacheResponseAsync(key, okObjectResult.Value, TimeSpan.FromSeconds(_liveTime));
             }
-        }
-
-        private string GenerateCacheKeyFromRequest(HttpRequest request)
-        {
-            var keyBuilder = new StringBuilder();
-
-            keyBuilder.Append($"{request.Path}");
-            
-            foreach (var (key, value) in request.Query.OrderBy(x => x.Key))
-            {
-                keyBuilder.Append($"{key}_{value}");
-            }
-
-            return keyBuilder.ToString();
         }
     }
 }

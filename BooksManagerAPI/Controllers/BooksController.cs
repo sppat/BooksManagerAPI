@@ -24,7 +24,7 @@ namespace BooksManagerAPI.Controllers
         [HttpGet]
         [Cache(300)]
         public async Task<IActionResult> GetAll() 
-            => Ok(JsonConvert.SerializeObject(await _bookManager.GetAllBooksAsync(), Formatting.Indented));
+            => Ok(await _bookManager.GetAllBooksAsync());
 
         [HttpGet("{id}")]
         [Cache(300)]
@@ -35,7 +35,7 @@ namespace BooksManagerAPI.Controllers
                 return NotFound("The book you are looking for, does not exist.");
             }
 
-            return Ok(JsonConvert.SerializeObject(await _bookManager.GetBookByIdAsync(id), Formatting.Indented));
+            return Ok(await _bookManager.GetBookByIdAsync(id));
         } 
 
         [HttpPost]
@@ -78,6 +78,7 @@ namespace BooksManagerAPI.Controllers
         }
 
         [HttpGet("search/{searchString}")]
+        [Cache(300)]
         public async Task<IActionResult> SearchByTitle(string searchString) 
             => Ok(JsonConvert.SerializeObject(await _bookManager.GetBooksByTitleSearchAsync(searchString), Formatting.Indented));
     }

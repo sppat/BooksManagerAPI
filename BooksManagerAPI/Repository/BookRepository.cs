@@ -117,7 +117,7 @@ namespace BooksManagerAPI.Repository
                 on ""Categories"".""Id"" = ""Books"".""CategoryId""
                 inner join ""Authors""
                 on ""Authors"".""Id"" = ""Books"".""AuthorId""
-                where ""Books"".""Title"" like '%@Title%'
+                where ""Books"".""Title"" like '%' || @title || '%'
             ";
             
             return await DataQueryAsync(query, title: searchString);
@@ -161,7 +161,7 @@ namespace BooksManagerAPI.Repository
                     
                     if (title is not null)
                     {
-                        command.Parameters.AddWithValue("@Title", title);
+                        command.Parameters.AddWithValue("@title", title);
                     }
 
                     reader = await command.ExecuteReaderAsync();
