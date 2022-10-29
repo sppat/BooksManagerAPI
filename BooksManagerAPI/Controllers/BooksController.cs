@@ -1,9 +1,7 @@
 ﻿using BooksManagerAPI.Attributes;
-using BooksManagerAPI.Interfaces.RepositoryInterfaces;
 using BooksManagerAPI.Models.Dtos.BookDtos;
 using BooksManagerAPI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace BooksManagerAPI.Controllers
 {
@@ -12,23 +10,21 @@ namespace BooksManagerAPI.Controllers
     [ApiController]
     public class BooksController : ControllerBase
     {
-        private readonly IBookRepository _bookRepository;
         private readonly BookDataManager _bookManager;
 
-        public BooksController(IBookRepository bookRepository, BookDataManager bookManager)
+        public BooksController(BookDataManager bookManager)
         {
-            _bookRepository = bookRepository;
             _bookManager = bookManager;
         }
 
         [HttpGet]
         [Cache(300)]
-        public async Task<IActionResult> GetAll()
+        public async Task<ActionResult<ICollection<GetBookDto>>> GetAll()
             => Ok(await _bookManager.GetAllBooksAsync());
 
         [HttpGet("{id}")]
         [Cache(300)]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<ActionResult<GetBookDto>> GetById(int id)
         {
             if (!await _bookManager.BookExistsAsync(id))
             {
@@ -79,7 +75,7 @@ namespace BooksManagerAPI.Controllers
 
         [HttpGet("search/{searchString}")]
         [Cache(300)]
-        public async Task<IActionResult> SearchByTitle(string searchString)
-            => Ok(JsonConvert.SerializeObject(await _bookManager.GetBooksByTitleSearchAsync(searchString), Formatting.Indented));
+        public async Task<ActionResult<ICollection<GetBookDto>>> SearchByTitle(string searchString)
+            => Ok(await _bookManager.GetBooksByTitleSearchAsync(searchString));
     }
 }
