@@ -1,5 +1,4 @@
-﻿using BooksManagerAPI.Attributes;
-using BooksManagerAPI.Models.Dtos.BookDtos;
+﻿using BooksManagerAPI.Models.Dtos.BookDtos;
 using BooksManagerAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,13 +17,11 @@ namespace BooksManagerAPI.Controllers
         }
 
         [HttpGet]
-        [Cache(300)]
         [ProducesResponseType(200)]
         public async Task<ActionResult<ICollection<GetBookDto>>> GetAll()
             => Ok(await _bookManager.GetAllBooksAsync());
 
         [HttpGet("{id}")]
-        [Cache(300)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200)]
         public async Task<ActionResult<GetBookDto>> GetById(int id)
@@ -83,7 +80,6 @@ namespace BooksManagerAPI.Controllers
         }
 
         [HttpGet("search/{searchString}")]
-        [Cache(300)]
         [ProducesResponseType(200)]
         public async Task<ActionResult<ICollection<GetBookDto>>> SearchByTitle(string searchString)
             => Ok(await _bookManager.GetBooksByTitleSearchAsync(searchString));

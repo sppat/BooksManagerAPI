@@ -118,7 +118,7 @@ namespace BooksManagerAPI.Repository
             return await DataQueryAsync(query, title: searchString);
         }
 
-        public async Task UpdateAsync(PutBookDto putBookDto)
+        public async Task<DataTable> UpdateAsync(PutBookDto putBookDto)
         {
             string buildSet = "set ";
 
@@ -136,6 +136,8 @@ namespace BooksManagerAPI.Repository
                 @" where ""Books"".""Id"" = @Id";
 
             await DataManipulateAsync(query, dataObject: putBookDto);
+            
+            return await GetByIdAsync(putBookDto.Id);
         }
 
         private async Task<DataTable> DataQueryAsync(string query, int? id = null, string? title = null)
