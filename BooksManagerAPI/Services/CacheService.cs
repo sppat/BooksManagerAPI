@@ -29,5 +29,7 @@ namespace BooksManagerAPI.Services
         {
             return await _distributedCache.GetStringAsync(key);
         }
+
+        public async Task RemoveCachedAsync(string key) => await _distributedCache.RemoveAsync(key);
     }
 }

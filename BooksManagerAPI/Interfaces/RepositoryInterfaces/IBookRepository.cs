@@ -11,6 +11,6 @@ namespace BooksManagerAPI.Interfaces.RepositoryInterfaces
         Task<DataTable> GetAllBooksAsync();
         Task<DataTable> GetByIdAsync(int id);
         Task<DataTable> SearchByTitleAsync(string searchString);
-        Task UpdateAsync(PutBookDto putBookDto);
+        Task<DataTable> UpdateAsync(PutBookDto putBookDto);
     }
 }
