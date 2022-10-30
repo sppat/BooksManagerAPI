@@ -21,7 +21,7 @@ namespace BooksManagerAPI.Repository
                 values (@Title, @PublicationDate, @Pages, @CategoryId, @AuthorId)
             ";
 
-            await DataManipulateAsync(query, postBookDto);
+            await GetDataAsync(query, postBookDto);
         }
 
         public async Task DeleteAsync(int id)
@@ -31,7 +31,7 @@ namespace BooksManagerAPI.Repository
                 where ""Books"".""Id"" = @Id
             ";
 
-            await DataManipulateAsync(query, id: id);
+            await GetDataAsync(query, id: id);
         }
 
         public async Task<bool> ExistsAsync(int id)
@@ -42,7 +42,7 @@ namespace BooksManagerAPI.Repository
                 where ""Books"".""Id"" = @id
             ";
 
-            var result = await DataQueryAsync(query, id: id);
+            var result = await GetDataAsync(query, id: id);
 
             return result.Rows.Count != 0;
         }
@@ -67,7 +67,7 @@ namespace BooksManagerAPI.Repository
                 on ""Authors"".""Id"" = ""Books"".""AuthorId""
             ";
 
-            return await DataQueryAsync(query);
+            return await GetDataAsync(query);
         }
 
         public async Task<DataTable> GetByIdAsync(int id)
@@ -91,7 +91,7 @@ namespace BooksManagerAPI.Repository
                 where ""Books"".""Id"" = @id
             ";
 
-            return await DataQueryAsync(query, id: id);
+            return await GetDataAsync(query, id: id);
         }
 
         public async Task<DataTable> SearchByTitleAsync(string searchString)
@@ -112,10 +112,10 @@ namespace BooksManagerAPI.Repository
                 on ""Categories"".""Id"" = ""Books"".""CategoryId""
                 inner join ""Authors""
                 on ""Authors"".""Id"" = ""Books"".""AuthorId""
-                where ""Books"".""Title"" like '%' || @title || '%'
+                where lower(""Books"".""Title"") like '%' || @title || '%'
             ";
 
-            return await DataQueryAsync(query, title: searchString);
+            return await GetDataAsync(query, title: searchString);
         }
 
         public async Task<DataTable> UpdateAsync(PutBookDto putBookDto)
@@ -135,44 +135,21 @@ namespace BooksManagerAPI.Repository
                 buildSet.TrimEnd().TrimEnd(',') +
                 @" where ""Books"".""Id"" = @Id";
 
-            await DataManipulateAsync(query, dataObject: putBookDto);
+            await GetDataAsync(query, dataObject: putBookDto);
             
             return await GetByIdAsync(putBookDto.Id);
         }
 
-        private async Task<DataTable> DataQueryAsync(string query, int? id = null, string? title = null)
+        private async Task<DataTable> GetDataAsync(
+            string query,
+            object? dataObject = null, 
+            int? id = null, 
+            string? title = null
+        )
         {
             DataTable table = new DataTable();
             NpgsqlDataReader reader;
 
-            await using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
-            {
-                await connection.OpenAsync();
-
-                await using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                {
-                    if (id is not null)
-                    {
-                        command.Parameters.AddWithValue("@id", id);
-                    }
-
-                    if (title is not null)
-                    {
-                        command.Parameters.AddWithValue("@title", title);
-                    }
-
-                    reader = await command.ExecuteReaderAsync();
-                    table.Load(reader);
-
-                    connection.Close();
-                }
-            }
-
-            return table;
-        }
-
-        private async Task DataManipulateAsync(string query, object? dataObject = null, int? id = null)
-        {
             await using (NpgsqlConnection connection = new NpgsqlConnection(_config.GetConnectionString("Default")))
             {
                 await connection.OpenAsync();
@@ -196,11 +173,19 @@ namespace BooksManagerAPI.Repository
                         command.Parameters.AddWithValue("@Id", id);
                     }
 
-                    await command.ExecuteReaderAsync();
+                    if (title is not null)
+                    {
+                        command.Parameters.AddWithValue("@title", title);
+                    }
+
+                    reader = await command.ExecuteReaderAsync();
+                    table.Load(reader);
 
                     connection.Close();
                 }
             }
+
+            return table;
         }
     }
 }

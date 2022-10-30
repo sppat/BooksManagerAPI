@@ -10,17 +10,17 @@ namespace BooksManagerAPI.Services
     {
         private readonly IBookRepository _bookRepository;
         private readonly ICacheService _cacheService;
-        private readonly IConfiguration _config;
+        private readonly IConfiguration _configuration;
         private readonly BookDataMappingManager _bookMapper;
         private int _liveTime = 300;
 
-        public string BaseUrl => _config.GetValue<string>("BaseUrl"); 
+        public string BaseUrl => _configuration["BaseUrl"];
 
-        public BookDataManager(IBookRepository bookRepository, ICacheService cacheService, IConfiguration config, BookDataMappingManager bookMapper)
+        public BookDataManager(IBookRepository bookRepository, ICacheService cacheService, IConfiguration configuration, BookDataMappingManager bookMapper)
         {
             _bookRepository = bookRepository;
             _cacheService = cacheService;
-            _config = config;
+            _configuration = configuration;
             _bookMapper = bookMapper;
         }
 
@@ -44,7 +44,13 @@ namespace BooksManagerAPI.Services
         }
 
         public async Task<ICollection<GetBookDto>> GetBooksByTitleSearchAsync(string searchString)
-            => _bookMapper.MapBooksToGetDto(await _bookRepository.SearchByTitleAsync(searchString));
+        {
+            ICollection<GetBookDto> getBookDtos = _bookMapper.MapBooksToGetDto(await _bookRepository.SearchByTitleAsync(searchString.ToLower()));
+
+            await _cacheService.CacheResponseAsync($"{BaseUrl}/search/{searchString}", getBookDtos, TimeSpan.FromSeconds(_liveTime));
+
+            return getBookDtos;
+        }
 
         public async Task AddAsync(PostBookDto postBookDto)
         {
@@ -52,7 +58,7 @@ namespace BooksManagerAPI.Services
 
             ICollection<GetBookDto> getBookDtos = await GetAllBooksAsync();
 
-            await _cacheService.CacheResponseAsync(BaseUrl, getBookDtos, TimeSpan.FromSeconds(300));
+            await _cacheService.CacheResponseAsync(BaseUrl, getBookDtos, TimeSpan.FromSeconds(_liveTime));
         }
 
         public async Task DeleteAsync(int id)
